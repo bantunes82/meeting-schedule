@@ -16,6 +16,7 @@ import jakarta.persistence.Table;
 
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -113,5 +114,16 @@ public class Meeting {
 
     public Instant getUpdatedAt() {
         return updatedAt;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof Meeting meeting)) return false;
+        return Objects.equals(timeSlot, meeting.timeSlot) && Objects.equals(title, meeting.title);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(timeSlot, title);
     }
 }

@@ -18,6 +18,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -65,6 +66,16 @@ public class TimeSlot {
         this.calendar = calendar;
         this.startTime = startTime;
         this.endTime = endTime;
+    }
+
+    public TimeSlot(UUID id, Calendar calendar, Instant startTime, Instant endTime) {
+        this(calendar, startTime, endTime);
+        this.id = id;
+    }
+
+    public TimeSlot(UUID id, Calendar calendar, Instant startTime, Instant endTime, TimeSlotStatus status) {
+        this(id, calendar, startTime, endTime);
+        this.status = status;
     }
 
     @PrePersist
@@ -129,5 +140,16 @@ public class TimeSlot {
 
     public Instant getUpdatedAt() {
         return updatedAt;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof TimeSlot timeSlot)) return false;
+        return Objects.equals(calendar, timeSlot.calendar) && Objects.equals(startTime, timeSlot.startTime) && Objects.equals(endTime, timeSlot.endTime) && status == timeSlot.status;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(calendar, startTime, endTime, status);
     }
 }
