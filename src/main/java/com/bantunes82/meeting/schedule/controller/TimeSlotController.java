@@ -1,8 +1,9 @@
 package com.bantunes82.meeting.schedule.controller;
 
-import com.bantunes82.meeting.schedule.controller.dto.v1.TimeSlotRequest;
-import com.bantunes82.meeting.schedule.controller.dto.v1.TimeSlotResponse;
-import com.bantunes82.meeting.schedule.controller.dto.v1.UpdateTimeSlotStatusRequest;
+import com.bantunes82.meeting.schedule.controller.v1.dto.TimeSlotRequest;
+import com.bantunes82.meeting.schedule.controller.v1.dto.TimeSlotResponse;
+import com.bantunes82.meeting.schedule.controller.v1.dto.UpdateTimeSlotStatusRequest;
+import com.bantunes82.meeting.schedule.controller.v1.mapper.TimeSlotMapper;
 import com.bantunes82.meeting.schedule.model.TimeSlotStatus;
 import com.bantunes82.meeting.schedule.service.TimeSlotService;
 import jakarta.validation.Valid;
@@ -28,9 +29,11 @@ import java.util.UUID;
 public class TimeSlotController {
 
     private final TimeSlotService timeSlotService;
+    private final TimeSlotMapper timeSlotMapper;
 
-    public TimeSlotController(TimeSlotService timeSlotService) {
+    public TimeSlotController(TimeSlotService timeSlotService, TimeSlotMapper timeSlotMapper) {
         this.timeSlotService = timeSlotService;
+        this.timeSlotMapper = timeSlotMapper;
     }
 
     /**
@@ -45,7 +48,7 @@ public class TimeSlotController {
             @PathVariable UUID userId,
             @Valid @RequestBody TimeSlotRequest request) {
         var timeSlot = timeSlotService.createTimeSlot(userId, request.startTime(), request.endTime());
-        return ResponseEntity.status(HttpStatus.CREATED).body(TimeSlotResponse.from(timeSlot));
+        return ResponseEntity.status(HttpStatus.CREATED).body(timeSlotMapper.toResponse(timeSlot));
     }
 
     /**
@@ -60,7 +63,7 @@ public class TimeSlotController {
             @PathVariable UUID userId,
             @PathVariable UUID slotId) {
         var timeSlot = timeSlotService.getTimeSlot(userId, slotId);
-        return ResponseEntity.ok(TimeSlotResponse.from(timeSlot));
+        return ResponseEntity.ok(timeSlotMapper.toResponse(timeSlot));
     }
 
     /**
@@ -77,7 +80,7 @@ public class TimeSlotController {
             @PathVariable UUID slotId,
             @Valid @RequestBody TimeSlotRequest request) {
         var timeSlot = timeSlotService.updateTimeSlot(userId, slotId, request.startTime(), request.endTime());
-        return ResponseEntity.ok(TimeSlotResponse.from(timeSlot));
+        return ResponseEntity.ok(timeSlotMapper.toResponse(timeSlot));
     }
 
     /**
@@ -109,6 +112,6 @@ public class TimeSlotController {
             @Valid @RequestBody UpdateTimeSlotStatusRequest request) {
         var modelStatus = TimeSlotStatus.valueOf(request.status().name());
         var timeSlot = timeSlotService.updateTimeSlotStatus(userId, slotId, modelStatus);
-        return ResponseEntity.ok(TimeSlotResponse.from(timeSlot));
+        return ResponseEntity.ok(timeSlotMapper.toResponse(timeSlot));
     }
 }

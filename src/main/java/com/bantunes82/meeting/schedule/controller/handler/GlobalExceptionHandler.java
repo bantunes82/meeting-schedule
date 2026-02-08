@@ -1,6 +1,6 @@
 package com.bantunes82.meeting.schedule.controller.handler;
 
-import com.bantunes82.meeting.schedule.controller.dto.v1.ErrorResponse;
+import com.bantunes82.meeting.schedule.controller.v1.dto.ErrorResponse;
 import com.bantunes82.meeting.schedule.exception.ResourceNotFoundException;
 import com.bantunes82.meeting.schedule.exception.TimeSlotOverlapException;
 import org.springframework.http.HttpStatus;

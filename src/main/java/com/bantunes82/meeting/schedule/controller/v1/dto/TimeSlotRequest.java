@@ -1,4 +1,4 @@
-package com.bantunes82.meeting.schedule.controller.dto.v1;
+package com.bantunes82.meeting.schedule.controller.v1.dto;
 
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;

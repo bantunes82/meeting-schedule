@@ -1,8 +1,10 @@
 package com.bantunes82.meeting.schedule.controller;
 
-import com.bantunes82.meeting.schedule.controller.dto.v1.TimeSlotRequest;
-import com.bantunes82.meeting.schedule.controller.dto.v1.TimeSlotStatus;
-import com.bantunes82.meeting.schedule.controller.dto.v1.UpdateTimeSlotStatusRequest;
+import com.bantunes82.meeting.schedule.controller.v1.dto.TimeSlotRequest;
+import com.bantunes82.meeting.schedule.controller.v1.dto.TimeSlotResponse;
+import com.bantunes82.meeting.schedule.controller.v1.dto.TimeSlotStatus;
+import com.bantunes82.meeting.schedule.controller.v1.dto.UpdateTimeSlotStatusRequest;
+import com.bantunes82.meeting.schedule.controller.v1.mapper.TimeSlotMapper;
 import com.bantunes82.meeting.schedule.exception.ResourceNotFoundException;
 import com.bantunes82.meeting.schedule.exception.TimeSlotOverlapException;
 import com.bantunes82.meeting.schedule.controller.handler.GlobalExceptionHandler;
@@ -23,6 +25,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
@@ -34,140 +37,156 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.mapstruct.factory.Mappers;
+
 @WebMvcTest({ TimeSlotController.class, GlobalExceptionHandler.class })
 class TimeSlotControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @MockitoBean
-    private TimeSlotService timeSlotService;
+        @MockitoBean
+        private TimeSlotService timeSlotService;
 
-    private static final UUID USER_ID = UUID.randomUUID();
-    private static final UUID SLOT_ID = UUID.randomUUID();
-    private static final String BASE_URL = "/api/1.0/users/" + USER_ID + "/time-slots";
-    private Calendar calendar;
+        @MockitoBean
+        private Mappers mappers;
 
-    @BeforeEach
-    void setUp() {
-        var user = new User("Alice", "alice@example.com");
-        calendar = new Calendar(user);
-    }
+        @MockitoBean
+        private TimeSlotMapper timeSlotMapper;
 
-    @Test
-    void createTimeSlot_shouldReturn201() throws Exception {
-        Instant start = Instant.now().plus(1, ChronoUnit.DAYS);
-        Instant end = start.plus(1, ChronoUnit.HOURS);
-        var timeSlot = new TimeSlot(SLOT_ID, calendar, start, end);
+        private static final UUID USER_ID = UUID.randomUUID();
+        private static final UUID SLOT_ID = UUID.randomUUID();
+        private static final String BASE_URL = "/api/1.0/users/" + USER_ID + "/time-slots";
+        private Calendar calendar;
 
-        when(timeSlotService.createTimeSlot(eq(USER_ID), eq(start), eq(end))).thenReturn(timeSlot);
+        @BeforeEach
+        void setUp() {
+                var user = new User("Alice", "alice@example.com");
+                calendar = new Calendar(user);
+        }
 
-        var request = new TimeSlotRequest(start, end);
-        mockMvc.perform(post(BASE_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(SLOT_ID.toString()))
-                .andExpect(jsonPath("$.status").value("FREE"));
-    }
+        @Test
+        void createTimeSlot_shouldReturn201() throws Exception {
+                Instant start = Instant.now().plus(1, ChronoUnit.DAYS);
+                Instant end = start.plus(1, ChronoUnit.HOURS);
+                var timeSlot = new TimeSlot(SLOT_ID, calendar, start, end);
 
-    @Test
-    void createTimeSlot_withOverlap_shouldReturn409() throws Exception {
-        Instant start = Instant.now().plus(1, ChronoUnit.DAYS);
-        Instant end = start.plus(1, ChronoUnit.HOURS);
+                when(timeSlotService.createTimeSlot(eq(USER_ID), eq(start), eq(end))).thenReturn(timeSlot);
+                when(timeSlotMapper.toResponse(any())).thenReturn(
+                                new TimeSlotResponse(SLOT_ID, start, end, TimeSlotStatus.FREE, false, null, null));
 
-        when(timeSlotService.createTimeSlot(eq(USER_ID), eq(start), eq(end)))
-                .thenThrow(new TimeSlotOverlapException("Time slot overlaps with an existing slot"));
+                var request = new TimeSlotRequest(start, end);
+                mockMvc.perform(post(BASE_URL)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isCreated())
+                                .andExpect(jsonPath("$.id").value(SLOT_ID.toString()))
+                                .andExpect(jsonPath("$.status").value("FREE"));
+        }
 
-        var request = new TimeSlotRequest(start, end);
-        mockMvc.perform(post(BASE_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").value("Time slot overlaps with an existing slot"));
-    }
+        @Test
+        void createTimeSlot_withOverlap_shouldReturn409() throws Exception {
+                Instant start = Instant.now().plus(1, ChronoUnit.DAYS);
+                Instant end = start.plus(1, ChronoUnit.HOURS);
 
-    @Test
-    void createTimeSlot_withInvalidTimeRange_shouldReturn400() throws Exception {
-        Instant start = Instant.now().plus(1, ChronoUnit.DAYS);
-        Instant end = start.minus(1, ChronoUnit.HOURS); // Invalid: end before start
+                when(timeSlotService.createTimeSlot(eq(USER_ID), eq(start), eq(end)))
+                                .thenThrow(new TimeSlotOverlapException("Time slot overlaps with an existing slot"));
 
-        when(timeSlotService.createTimeSlot(eq(USER_ID), eq(start), eq(end)))
-                .thenThrow(new IllegalArgumentException("End time must be after start time"));
+                var request = new TimeSlotRequest(start, end);
+                mockMvc.perform(post(BASE_URL)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isConflict())
+                                .andExpect(jsonPath("$.message").value("Time slot overlaps with an existing slot"));
+        }
 
-        var request = new TimeSlotRequest(start, end);
-        mockMvc.perform(post(BASE_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("End time must be after start time"));
-    }
+        @Test
+        void createTimeSlot_withInvalidTimeRange_shouldReturn400() throws Exception {
+                Instant start = Instant.now().plus(1, ChronoUnit.DAYS);
+                Instant end = start.minus(1, ChronoUnit.HOURS); // Invalid: end before start
 
-    @Test
-    void getTimeSlot_shouldReturn200() throws Exception {
-        Instant start = Instant.now().plus(1, ChronoUnit.DAYS);
-        Instant end = start.plus(1, ChronoUnit.HOURS);
-        var timeSlot = new TimeSlot(SLOT_ID, calendar, start, end);
+                when(timeSlotService.createTimeSlot(eq(USER_ID), eq(start), eq(end)))
+                                .thenThrow(new IllegalArgumentException("End time must be after start time"));
 
-        when(timeSlotService.getTimeSlot(USER_ID, SLOT_ID)).thenReturn(timeSlot);
+                var request = new TimeSlotRequest(start, end);
+                mockMvc.perform(post(BASE_URL)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.message").value("End time must be after start time"));
+        }
 
-        mockMvc.perform(get(BASE_URL + "/" + SLOT_ID))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(SLOT_ID.toString()))
-                .andExpect(jsonPath("$.status").value("FREE"));
-    }
+        @Test
+        void getTimeSlot_shouldReturn200() throws Exception {
+                Instant start = Instant.now().plus(1, ChronoUnit.DAYS);
+                Instant end = start.plus(1, ChronoUnit.HOURS);
+                var timeSlot = new TimeSlot(SLOT_ID, calendar, start, end);
 
-    @Test
-    void getTimeSlot_notFound_shouldReturn404() throws Exception {
-        when(timeSlotService.getTimeSlot(USER_ID, SLOT_ID))
-                .thenThrow(new ResourceNotFoundException("Time slot not found"));
+                when(timeSlotService.getTimeSlot(USER_ID, SLOT_ID)).thenReturn(timeSlot);
+                when(timeSlotMapper.toResponse(any())).thenReturn(
+                                new TimeSlotResponse(SLOT_ID, start, end, TimeSlotStatus.FREE, false, null, null));
 
-        mockMvc.perform(get(BASE_URL + "/" + SLOT_ID))
-                .andExpect(status().isNotFound());
-    }
+                mockMvc.perform(get(BASE_URL + "/" + SLOT_ID))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.id").value(SLOT_ID.toString()))
+                                .andExpect(jsonPath("$.status").value("FREE"));
+        }
 
-    @Test
-    void updateTimeSlot_shouldReturn200() throws Exception {
-        Instant start = Instant.now().plus(2, ChronoUnit.DAYS);
-        Instant end = start.plus(1, ChronoUnit.HOURS);
-        var timeSlot = new TimeSlot(SLOT_ID, calendar, start, end);
+        @Test
+        void getTimeSlot_notFound_shouldReturn404() throws Exception {
+                when(timeSlotService.getTimeSlot(USER_ID, SLOT_ID))
+                                .thenThrow(new ResourceNotFoundException("Time slot not found"));
 
-        when(timeSlotService.updateTimeSlot(eq(USER_ID), eq(SLOT_ID), eq(start), eq(end))).thenReturn(timeSlot);
+                mockMvc.perform(get(BASE_URL + "/" + SLOT_ID))
+                                .andExpect(status().isNotFound());
+        }
 
-        var request = new TimeSlotRequest(start, end);
-        mockMvc.perform(put(BASE_URL + "/" + SLOT_ID)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(SLOT_ID.toString()));
-    }
+        @Test
+        void updateTimeSlot_shouldReturn200() throws Exception {
+                Instant start = Instant.now().plus(2, ChronoUnit.DAYS);
+                Instant end = start.plus(1, ChronoUnit.HOURS);
+                var timeSlot = new TimeSlot(SLOT_ID, calendar, start, end);
 
-    @Test
-    void deleteTimeSlot_shouldReturn204() throws Exception {
-        doNothing().when(timeSlotService).deleteTimeSlot(USER_ID, SLOT_ID);
+                when(timeSlotService.updateTimeSlot(eq(USER_ID), eq(SLOT_ID), eq(start), eq(end))).thenReturn(timeSlot);
+                when(timeSlotMapper.toResponse(any())).thenReturn(
+                                new TimeSlotResponse(SLOT_ID, start, end, TimeSlotStatus.FREE, false, null, null));
 
-        mockMvc.perform(delete(BASE_URL + "/" + SLOT_ID))
-                .andExpect(status().isNoContent());
-    }
+                var request = new TimeSlotRequest(start, end);
+                mockMvc.perform(put(BASE_URL + "/" + SLOT_ID)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.id").value(SLOT_ID.toString()));
+        }
 
-    @Test
-    void updateTimeSlotStatus_shouldReturn200() throws Exception {
-        Instant start = Instant.now().plus(1, ChronoUnit.DAYS);
-        Instant end = start.plus(1, ChronoUnit.HOURS);
-        var timeSlot = new TimeSlot(SLOT_ID, calendar, start, end,
-                com.bantunes82.meeting.schedule.model.TimeSlotStatus.BUSY);
+        @Test
+        void deleteTimeSlot_shouldReturn204() throws Exception {
+                doNothing().when(timeSlotService).deleteTimeSlot(USER_ID, SLOT_ID);
 
-        when(timeSlotService.updateTimeSlotStatus(eq(USER_ID), eq(SLOT_ID),
-                eq(com.bantunes82.meeting.schedule.model.TimeSlotStatus.BUSY))).thenReturn(timeSlot);
+                mockMvc.perform(delete(BASE_URL + "/" + SLOT_ID))
+                                .andExpect(status().isNoContent());
+        }
 
-        var request = new UpdateTimeSlotStatusRequest(TimeSlotStatus.BUSY);
-        mockMvc.perform(patch(BASE_URL + "/" + SLOT_ID + "/status")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("BUSY"));
-    }
+        @Test
+        void updateTimeSlotStatus_shouldReturn200() throws Exception {
+                Instant start = Instant.now().plus(1, ChronoUnit.DAYS);
+                Instant end = start.plus(1, ChronoUnit.HOURS);
+                var timeSlot = new TimeSlot(SLOT_ID, calendar, start, end,
+                                com.bantunes82.meeting.schedule.model.TimeSlotStatus.BUSY);
+
+                when(timeSlotService.updateTimeSlotStatus(eq(USER_ID), eq(SLOT_ID),
+                                eq(com.bantunes82.meeting.schedule.model.TimeSlotStatus.BUSY))).thenReturn(timeSlot);
+                when(timeSlotMapper.toResponse(any())).thenReturn(
+                                new TimeSlotResponse(SLOT_ID, start, end, TimeSlotStatus.BUSY, false, null, null));
+
+                var request = new UpdateTimeSlotStatusRequest(TimeSlotStatus.BUSY);
+                mockMvc.perform(patch(BASE_URL + "/" + SLOT_ID + "/status")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.status").value("BUSY"));
+        }
 }
