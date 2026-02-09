@@ -25,6 +25,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Set;
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.hasItems;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -99,8 +100,10 @@ class MeetingControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.details.[0]").value("title: Title is required"))
-                .andExpect(jsonPath("$.details.[1]").value("participantIds: At least one participant is required"));
+                .andExpect(jsonPath("$.details", hasItems(
+                        "title: Title is required",
+                        "participantIds: At least one participant is required"
+                )));
     }
 
     @Test
