@@ -2,7 +2,10 @@ package com.bantunes82.meeting.schedule.controller.handler;
 
 import com.bantunes82.meeting.schedule.controller.v1.dto.ErrorResponse;
 import com.bantunes82.meeting.schedule.exception.ResourceNotFoundException;
+import com.bantunes82.meeting.schedule.exception.TimeSlotNotAvailableException;
 import com.bantunes82.meeting.schedule.exception.TimeSlotOverlapException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -18,8 +21,11 @@ import java.util.List;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex) {
+        log.error("Resource not found: {}", ex.getMessage(), ex);
         var error = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
                 "Not Found",
@@ -29,6 +35,17 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(TimeSlotOverlapException.class)
     public ResponseEntity<ErrorResponse> handleOverlap(TimeSlotOverlapException ex) {
+        log.error("Time slot overlap: {}", ex.getMessage(), ex);
+        var error = new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                "Conflict",
+                ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(TimeSlotNotAvailableException.class)
+    public ResponseEntity<ErrorResponse> handleNotAvailable(TimeSlotNotAvailableException ex) {
+        log.error("Time slot not available: {}", ex.getMessage(), ex);
         var error = new ErrorResponse(
                 HttpStatus.CONFLICT.value(),
                 "Conflict",
@@ -38,6 +55,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
     public ResponseEntity<ErrorResponse> handleOptimisticLock(ObjectOptimisticLockingFailureException ex) {
+        log.error("Optimistic locking failure: {}", ex.getMessage(), ex);
         var error = new ErrorResponse(
                 HttpStatus.CONFLICT.value(),
                 "Conflict",
@@ -50,6 +68,7 @@ public class GlobalExceptionHandler {
         List<String> details = ex.getBindingResult().getFieldErrors().stream()
                 .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
                 .toList();
+        log.error("Validation failed: {}", details, ex);
         var error = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 "Bad Request",
@@ -60,6 +79,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
+        log.error("Illegal argument: {}", ex.getMessage(), ex);
         var error = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 "Bad Request",

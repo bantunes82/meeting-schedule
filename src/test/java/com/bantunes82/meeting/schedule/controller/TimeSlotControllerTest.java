@@ -37,7 +37,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import org.mapstruct.factory.Mappers;
 
 @WebMvcTest({ TimeSlotController.class, GlobalExceptionHandler.class })
 class TimeSlotControllerTest {
@@ -50,9 +49,6 @@ class TimeSlotControllerTest {
 
         @MockitoBean
         private TimeSlotService timeSlotService;
-
-        @MockitoBean
-        private Mappers mappers;
 
         @MockitoBean
         private TimeSlotMapper timeSlotMapper;
