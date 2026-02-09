@@ -64,6 +64,11 @@ public class Meeting {
         this.participants = participants;
     }
 
+    public Meeting(UUID id, TimeSlot timeSlot, String title, String description, Set<User> participants) {
+        this(timeSlot, title, description, participants);
+        this.id = id;
+    }
+
     @PrePersist
     protected void onCreate() {
         Instant now = Instant.now();
