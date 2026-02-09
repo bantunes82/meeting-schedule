@@ -136,7 +136,7 @@ public class TimeSlotService {
 
     private Calendar findCalendarByUserId(UUID userId) {
         return calendarRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+                .orElseThrow(() -> new ResourceNotFoundException("Calendar not found to the User with id: " + userId));
     }
 
     private TimeSlot findSlotByIdAndCalendar(UUID slotId, UUID calendarId) {

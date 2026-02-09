@@ -93,7 +93,8 @@ class TimeSlotServiceTest {
         when(calendarRepository.findByUserId(userId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> timeSlotService.createTimeSlot(userId, startTime, endTime))
-                .isInstanceOf(ResourceNotFoundException.class);
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("Calendar not found to the User with id: " + userId);
     }
 
     @Test
@@ -114,7 +115,8 @@ class TimeSlotServiceTest {
         when(timeSlotRepository.findByIdAndCalendarId(slotId, calendar.getId())).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> timeSlotService.getTimeSlot(userId, slotId))
-                .isInstanceOf(ResourceNotFoundException.class);
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("Time slot not found with id: " + slotId);
     }
 
 
