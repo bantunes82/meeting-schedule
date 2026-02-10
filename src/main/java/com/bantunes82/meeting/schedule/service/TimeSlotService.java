@@ -7,6 +7,7 @@ import com.bantunes82.meeting.schedule.model.TimeSlot;
 import com.bantunes82.meeting.schedule.model.TimeSlotStatus;
 import com.bantunes82.meeting.schedule.repository.CalendarRepository;
 import com.bantunes82.meeting.schedule.repository.TimeSlotRepository;
+import io.micrometer.observation.annotation.Observed;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +39,7 @@ public class TimeSlotService {
      * @param endTime   the end time of the slot
      * @return the created time slot
      */
+    @Observed(name="timeslot.create")
     @Transactional
     public TimeSlot createTimeSlot(UUID userId, Instant startTime, Instant endTime) {
         validateTimeRange(startTime, endTime);
@@ -64,6 +66,7 @@ public class TimeSlotService {
      * @param slotId the time slot UUID
      * @return the time slot response
      */
+    @Observed(name="timeslot.get")
     public TimeSlot getTimeSlot(UUID userId, UUID slotId) {
         Calendar calendar = findCalendarByUserId(userId);
         return findSlotByIdAndCalendar(slotId, calendar.getId());
@@ -78,6 +81,7 @@ public class TimeSlotService {
      * @param endTime   the new end time
      * @return the updated time slot
      */
+    @Observed(name="timeslot.update")
     @Transactional
     public TimeSlot updateTimeSlot(UUID userId, UUID slotId, Instant startTime, Instant endTime) {
         validateTimeRange(startTime, endTime);
@@ -105,6 +109,7 @@ public class TimeSlotService {
      * @param userId the owner's UUID
      * @param slotId the time slot UUID
      */
+    @Observed(name="timeslot.delete")
     @Transactional
     public void deleteTimeSlot(UUID userId, UUID slotId) {
         Calendar calendar = findCalendarByUserId(userId);
@@ -121,6 +126,7 @@ public class TimeSlotService {
      * @param status the new status
      * @return the updated time slot
      */
+    @Observed(name="timeslot.update-status")
     @Transactional
     public TimeSlot updateTimeSlotStatus(UUID userId, UUID slotId, TimeSlotStatus status) {
         Calendar calendar = findCalendarByUserId(userId);

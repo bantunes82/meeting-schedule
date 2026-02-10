@@ -1,6 +1,7 @@
 package com.bantunes82.meeting.schedule.repository;
 
 import com.bantunes82.meeting.schedule.model.Meeting;
+import io.micrometer.observation.annotation.Observed;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -12,6 +13,7 @@ import java.util.UUID;
 /**
  * Repository for Meeting entity operations with keyset pagination.
  */
+@Observed
 public interface MeetingRepository extends JpaRepository<Meeting, UUID> {
 
     /**

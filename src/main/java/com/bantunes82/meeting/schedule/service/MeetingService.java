@@ -11,6 +11,7 @@ import com.bantunes82.meeting.schedule.repository.CalendarRepository;
 import com.bantunes82.meeting.schedule.repository.MeetingRepository;
 import com.bantunes82.meeting.schedule.repository.TimeSlotRepository;
 import com.bantunes82.meeting.schedule.repository.UserRepository;
+import io.micrometer.observation.annotation.Observed;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,6 +54,7 @@ public class MeetingService {
      * @param participantIds the UUIDs of participants to invite
      * @return the created meeting
      */
+    @Observed(name="meeting.create")
     @Transactional
     public Meeting createMeeting(UUID userId, UUID slotId, String title, String description, Set<UUID> participantIds) {
         Calendar calendar = findCalendarByUserId(userId);
@@ -85,6 +87,7 @@ public class MeetingService {
      * @param meetingId the meeting UUID
      * @return the meeting with full details
      */
+    @Observed(name="meeting.get")
     public Meeting getMeeting(UUID userId, UUID meetingId) {
         Calendar calendar = findCalendarByUserId(userId);
         Meeting meeting = meetingRepository.findByIdAndCalendarId(meetingId, calendar.getId())

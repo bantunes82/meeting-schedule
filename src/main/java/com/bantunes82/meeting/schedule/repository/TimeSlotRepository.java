@@ -1,6 +1,7 @@
 package com.bantunes82.meeting.schedule.repository;
 
 import com.bantunes82.meeting.schedule.model.TimeSlot;
+import io.micrometer.observation.annotation.Observed;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,6 +13,7 @@ import java.util.UUID;
 /**
  * Repository for TimeSlot entity.
  */
+@Observed
 public interface TimeSlotRepository extends JpaRepository<TimeSlot, UUID> {
 
     /**
