@@ -30,6 +30,8 @@
 		<java.version>25</java.version>
 		<mapstruct.version>1.6.3</mapstruct.version>
 		<opentelemetry-logback-appender.version>2.21.0-alpha</opentelemetry-logback-appender.version>
+		<gatling.version>3.14.9</gatling.version>
+		<gatling.maven.plugin.version>4.21.0</gatling.maven.plugin.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -120,6 +122,14 @@
 			<artifactId>spring-boot-starter-opentelemetry-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<!-- Gatling -->
+		<dependency>
+			<groupId>io.gatling.highcharts</groupId>
+			<artifactId>gatling-charts-highcharts</artifactId>
+			<version>${gatling.version}</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -142,6 +152,14 @@
 					<compilerArgs>
 						<arg>-Amapstruct.defaultComponentModel=spring</arg>
 					</compilerArgs>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>io.gatling</groupId>
+				<artifactId>gatling-maven-plugin</artifactId>
+				<version>${gatling.maven.plugin.version}</version>
+				<configuration>
+					<simulationsFolder>src/test/java</simulationsFolder>
 				</configuration>
 			</plugin>
 		</plugins>
