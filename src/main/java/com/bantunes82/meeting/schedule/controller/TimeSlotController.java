@@ -48,7 +48,7 @@ public class TimeSlotController {
      * @param request the creation request with start and end times
      * @return the created time slot (201 Created)
      */
-    @Timed(value = "timeSlot.create.controller", description = "Time taken to create a time slot", histogram = true, percentiles = {0.5,0.75,0.95,0.98,0.99})
+    @Timed(value = "timeslot.create.controller", description = "Time taken to create a time slot", histogram = true, percentiles = {0.5,0.75,0.95,0.98,0.99})
     @PostMapping
     public ResponseEntity<TimeSlotResponse> createTimeSlot(
             @PathVariable UUID userId,
@@ -83,7 +83,7 @@ public class TimeSlotController {
      * @param request the update request
      * @return the updated time slot
      */
-    @Timed(value = "timeSlot.update.controller", description = "Time taken to update a time slot", histogram = true, percentiles = {0.5,0.75,0.95,0.98,0.99})
+    @Timed(value = "timeslot.update.controller", description = "Time taken to update a time slot", histogram = true, percentiles = {0.5,0.75,0.95,0.98,0.99})
     @PutMapping("/{slotId}")
     public ResponseEntity<TimeSlotResponse> updateTimeSlot(
             @PathVariable UUID userId,
@@ -100,7 +100,7 @@ public class TimeSlotController {
      * @param userId the user's UUID
      * @param slotId the time slot's UUID
      */
-    @Timed(value = "timeSlot.delete.controller", description = "Time taken to delete a time slot", histogram = true, percentiles = {0.5,0.75,0.95,0.98,0.99})
+    @Timed(value = "timeslot.delete.controller", description = "Time taken to delete a time slot", histogram = true, percentiles = {0.5,0.75,0.95,0.98,0.99})
     @DeleteMapping("/{slotId}")
     public ResponseEntity<Void> deleteTimeSlot(
             @PathVariable UUID userId,
@@ -118,7 +118,7 @@ public class TimeSlotController {
      * @param request the status update request
      * @return the updated time slot
      */
-    @Timed(value = "timeSlot.updateStatus.controller", description = "Time taken to update a time slot's status", histogram = true, percentiles = {0.5,0.75,0.95,0.98,0.99})
+    @Timed(value = "timeslot.update-status.controller", description = "Time taken to update a time slot's status", histogram = true, percentiles = {0.5,0.75,0.95,0.98,0.99})
     @PatchMapping("/{slotId}/status")
     public ResponseEntity<TimeSlotResponse> updateTimeSlotStatus(
             @PathVariable UUID userId,
