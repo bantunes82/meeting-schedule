@@ -24,7 +24,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -61,7 +60,6 @@ class TimeSlotServiceTest {
         var timeSlotExpected = new TimeSlot(calendar, startTime, endTime);
 
         when(calendarService.findByUserId(userId)).thenReturn(calendar);
-        when(timeSlotRepository.existsOverlappingSlot(any(), eq(startTime), eq(endTime))).thenReturn(false);
         when(timeSlotRepository.save(any(TimeSlot.class))).thenReturn(timeSlotExpected);
 
         var timeSlotResult = timeSlotService.createTimeSlot(userId, startTime, endTime);
@@ -73,7 +71,7 @@ class TimeSlotServiceTest {
     @Test
     void createTimeSlot_shouldThrowOnOverlap() {
         when(calendarService.findByUserId(userId)).thenReturn(calendar);
-        when(timeSlotRepository.existsOverlappingSlot(any(), eq(startTime), eq(endTime))).thenReturn(true);
+        when(timeSlotRepository.save(any())).thenThrow(new org.springframework.dao.DataIntegrityViolationException("Overlap"));
 
         assertThatThrownBy(() -> timeSlotService.createTimeSlot(userId, startTime, endTime))
                 .isInstanceOf(TimeSlotOverlapException.class)
@@ -128,7 +126,6 @@ class TimeSlotServiceTest {
 
         when(calendarService.findByUserId(userId)).thenReturn(calendar);
         when(timeSlotRepository.findByIdAndCalendarId(slotId, calendar.getId())).thenReturn(Optional.of(timeSlot));
-        when(timeSlotRepository.existsOverlappingSlotExcluding(any(), eq(slotId), eq(newStart), eq(newEnd))).thenReturn(false);
         when(timeSlotRepository.save(any(TimeSlot.class))).thenReturn(timeSlot);
 
         var timeSlotResult = timeSlotService.updateTimeSlot(userId, slotId, newStart, newEnd);
@@ -137,6 +134,21 @@ class TimeSlotServiceTest {
         assertThat(timeSlotResult.getStartTime()).isEqualTo(newStart);
         assertThat(timeSlotResult.getEndTime()).isEqualTo(newEnd);
         verify(timeSlotRepository).save(any(TimeSlot.class));
+    }
+
+    @Test
+    void updateTimeSlot_shouldThrowOnOverlap() {
+        var timeSlot = new TimeSlot(calendar, startTime, endTime);
+        Instant newStart = startTime.plus(2, ChronoUnit.HOURS);
+        Instant newEnd = newStart.plus(1, ChronoUnit.HOURS);
+
+        when(calendarService.findByUserId(userId)).thenReturn(calendar);
+        when(timeSlotRepository.findByIdAndCalendarId(slotId, calendar.getId())).thenReturn(Optional.of(timeSlot));
+        when(timeSlotRepository.save(any())).thenThrow(new org.springframework.dao.DataIntegrityViolationException("Overlap"));
+
+        assertThatThrownBy(() -> timeSlotService.updateTimeSlot(userId, slotId, newStart, newEnd))
+                .isInstanceOf(TimeSlotOverlapException.class)
+                .hasMessage("Updated time slot would overlap with an existing slot");
     }
 
     @Test

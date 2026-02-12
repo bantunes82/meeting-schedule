@@ -31,7 +31,7 @@ public class TimeSlotService {
 
     /**
      * Creates a new time slot for the user's calendar.
-     * Validates no overlap exists (app-level check + DB exclusion constraint as safety net).
+     * Overlap detection is enforced by the DB exclusion constraint.
      *
      * @param userId  the owner's UUID
      * @param startTime the start time of the slot
@@ -43,10 +43,6 @@ public class TimeSlotService {
     public TimeSlot createTimeSlot(UUID userId, Instant startTime, Instant endTime) {
         validateTimeRange(startTime, endTime);
         Calendar calendar = calendarService.findByUserId(userId);
-
-        if (timeSlotRepository.existsOverlappingSlot(calendar.getId(), startTime, endTime)) {
-            throw new TimeSlotOverlapException("Time slot overlaps with an existing slot");
-        }
 
         TimeSlot timeSlot = new TimeSlot(calendar, startTime, endTime);
         try {
@@ -72,7 +68,8 @@ public class TimeSlotService {
     }
 
     /**
-     * Updates a time slot's start and end times, validating no overlap.
+     * Updates a time slot's start and end times.
+     * Overlap detection is enforced by the DB exclusion constraint.
      *
      * @param userId  the owner's UUID
      * @param slotId  the time slot UUID
@@ -86,11 +83,6 @@ public class TimeSlotService {
         validateTimeRange(startTime, endTime);
         Calendar calendar = calendarService.findByUserId(userId);
         TimeSlot timeSlot = findSlotByIdAndCalendar(slotId, calendar.getId());
-
-        if (timeSlotRepository.existsOverlappingSlotExcluding(
-                calendar.getId(), slotId, startTime, endTime)) {
-            throw new TimeSlotOverlapException("Updated time slot would overlap with an existing slot");
-        }
 
         timeSlot.setStartTime(startTime);
         timeSlot.setEndTime(endTime);
