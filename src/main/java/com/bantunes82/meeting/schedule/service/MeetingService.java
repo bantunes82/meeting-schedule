@@ -7,7 +7,6 @@ import com.bantunes82.meeting.schedule.model.Meeting;
 import com.bantunes82.meeting.schedule.model.TimeSlot;
 import com.bantunes82.meeting.schedule.model.TimeSlotStatus;
 import com.bantunes82.meeting.schedule.model.User;
-import com.bantunes82.meeting.schedule.repository.CalendarRepository;
 import com.bantunes82.meeting.schedule.repository.MeetingRepository;
 import com.bantunes82.meeting.schedule.repository.TimeSlotRepository;
 import com.bantunes82.meeting.schedule.repository.UserRepository;
@@ -29,16 +28,16 @@ public class MeetingService {
 
     private final MeetingRepository meetingRepository;
     private final TimeSlotRepository timeSlotRepository;
-    private final CalendarRepository calendarRepository;
+    private final CalendarService calendarService;
     private final UserRepository userRepository;
 
     public MeetingService(MeetingRepository meetingRepository,
             TimeSlotRepository timeSlotRepository,
-            CalendarRepository calendarRepository,
+            CalendarService calendarService,
             UserRepository userRepository) {
         this.meetingRepository = meetingRepository;
         this.timeSlotRepository = timeSlotRepository;
-        this.calendarRepository = calendarRepository;
+        this.calendarService = calendarService;
         this.userRepository = userRepository;
     }
 
@@ -57,7 +56,7 @@ public class MeetingService {
     @Observed(name="meeting.create")
     @Transactional
     public Meeting createMeeting(UUID userId, UUID slotId, String title, String description, Set<UUID> participantIds) {
-        Calendar calendar = findCalendarByUserId(userId);
+        Calendar calendar = calendarService.findByUserId(userId);
         TimeSlot timeSlot = timeSlotRepository.findByIdAndCalendarId(slotId, calendar.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Time slot not found with id: " + slotId));
 
@@ -89,7 +88,7 @@ public class MeetingService {
      */
     @Observed(name="meeting.get")
     public Meeting getMeeting(UUID userId, UUID meetingId) {
-        Calendar calendar = findCalendarByUserId(userId);
+        Calendar calendar = calendarService.findByUserId(userId);
         Meeting meeting = meetingRepository.findByIdAndCalendarId(meetingId, calendar.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Meeting not found with id: " + meetingId));
 
@@ -105,9 +104,5 @@ public class MeetingService {
         return new HashSet<>(users);
     }
 
-    private Calendar findCalendarByUserId(UUID userId) {
-        return calendarRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Calendar not found to the User with id: " + userId));
-    }
 
 }

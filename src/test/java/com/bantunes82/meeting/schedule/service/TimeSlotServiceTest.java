@@ -7,7 +7,6 @@ import com.bantunes82.meeting.schedule.model.Meeting;
 import com.bantunes82.meeting.schedule.model.TimeSlot;
 import com.bantunes82.meeting.schedule.model.TimeSlotStatus;
 import com.bantunes82.meeting.schedule.model.User;
-import com.bantunes82.meeting.schedule.repository.CalendarRepository;
 import com.bantunes82.meeting.schedule.repository.TimeSlotRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,7 +35,7 @@ class TimeSlotServiceTest {
     private TimeSlotRepository timeSlotRepository;
 
     @Mock
-    private CalendarRepository calendarRepository;
+    private CalendarService calendarService;
 
     @InjectMocks
     private TimeSlotService timeSlotService;
@@ -61,7 +60,7 @@ class TimeSlotServiceTest {
     void createTimeSlot_shouldCreateSuccessfully() {
         var timeSlotExpected = new TimeSlot(calendar, startTime, endTime);
 
-        when(calendarRepository.findByUserId(userId)).thenReturn(Optional.of(calendar));
+        when(calendarService.findByUserId(userId)).thenReturn(calendar);
         when(timeSlotRepository.existsOverlappingSlot(any(), eq(startTime), eq(endTime))).thenReturn(false);
         when(timeSlotRepository.save(any(TimeSlot.class))).thenReturn(timeSlotExpected);
 
@@ -73,7 +72,7 @@ class TimeSlotServiceTest {
 
     @Test
     void createTimeSlot_shouldThrowOnOverlap() {
-        when(calendarRepository.findByUserId(userId)).thenReturn(Optional.of(calendar));
+        when(calendarService.findByUserId(userId)).thenReturn(calendar);
         when(timeSlotRepository.existsOverlappingSlot(any(), eq(startTime), eq(endTime))).thenReturn(true);
 
         assertThatThrownBy(() -> timeSlotService.createTimeSlot(userId, startTime, endTime))
@@ -90,7 +89,8 @@ class TimeSlotServiceTest {
 
     @Test
     void createTimeSlot_shouldThrowWhenUserNotFound() {
-        when(calendarRepository.findByUserId(userId)).thenReturn(Optional.empty());
+        when(calendarService.findByUserId(userId))
+                .thenThrow(new ResourceNotFoundException("Calendar not found to the User with id: " + userId));
 
         assertThatThrownBy(() -> timeSlotService.createTimeSlot(userId, startTime, endTime))
                 .isInstanceOf(ResourceNotFoundException.class)
@@ -101,7 +101,7 @@ class TimeSlotServiceTest {
     void getTimeSlot_shouldReturnSlot() {
         var timeSlotExpected = new TimeSlot(calendar, startTime, endTime);
 
-        when(calendarRepository.findByUserId(userId)).thenReturn(Optional.of(calendar));
+        when(calendarService.findByUserId(userId)).thenReturn(calendar);
         when(timeSlotRepository.findByIdAndCalendarId(slotId, calendar.getId())).thenReturn(Optional.of(timeSlotExpected));
 
         var timeSlotResult = timeSlotService.getTimeSlot(userId, slotId);
@@ -111,7 +111,7 @@ class TimeSlotServiceTest {
 
     @Test
     void getTimeSlot_shouldThrowWhenNotFound() {
-        when(calendarRepository.findByUserId(userId)).thenReturn(Optional.of(calendar));
+        when(calendarService.findByUserId(userId)).thenReturn(calendar);
         when(timeSlotRepository.findByIdAndCalendarId(slotId, calendar.getId())).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> timeSlotService.getTimeSlot(userId, slotId))
@@ -126,7 +126,7 @@ class TimeSlotServiceTest {
         Instant newStart = startTime.plus(2, ChronoUnit.HOURS);
         Instant newEnd = newStart.plus(1, ChronoUnit.HOURS);
 
-        when(calendarRepository.findByUserId(userId)).thenReturn(Optional.of(calendar));
+        when(calendarService.findByUserId(userId)).thenReturn(calendar);
         when(timeSlotRepository.findByIdAndCalendarId(slotId, calendar.getId())).thenReturn(Optional.of(timeSlot));
         when(timeSlotRepository.existsOverlappingSlotExcluding(any(), eq(slotId), eq(newStart), eq(newEnd))).thenReturn(false);
         when(timeSlotRepository.save(any(TimeSlot.class))).thenReturn(timeSlot);
@@ -143,7 +143,7 @@ class TimeSlotServiceTest {
     void deleteTimeSlot_shouldDelete() {
         var timeSlot = new TimeSlot(calendar, startTime, endTime);
 
-        when(calendarRepository.findByUserId(userId)).thenReturn(Optional.of(calendar));
+        when(calendarService.findByUserId(userId)).thenReturn(calendar);
         when(timeSlotRepository.findByIdAndCalendarId(slotId, calendar.getId())).thenReturn(Optional.of(timeSlot));
 
         timeSlotService.deleteTimeSlot(userId, slotId);
@@ -155,7 +155,7 @@ class TimeSlotServiceTest {
     void updateTimeSlotStatus_toBusy_shouldUpdate() {
         var timeSlot = new TimeSlot(calendar, startTime, endTime);
 
-        when(calendarRepository.findByUserId(userId)).thenReturn(Optional.of(calendar));
+        when(calendarService.findByUserId(userId)).thenReturn(calendar);
         when(timeSlotRepository.findByIdAndCalendarId(slotId, calendar.getId())).thenReturn(Optional.of(timeSlot));
         when(timeSlotRepository.save(any(TimeSlot.class))).thenReturn(timeSlot);
 
@@ -173,7 +173,7 @@ class TimeSlotServiceTest {
         var meeting = new Meeting(timeSlot, "Test Meeting", "Desc", Set.of());
         timeSlot.setMeeting(meeting);
 
-        when(calendarRepository.findByUserId(userId)).thenReturn(Optional.of(calendar));
+        when(calendarService.findByUserId(userId)).thenReturn(calendar);
         when(timeSlotRepository.findByIdAndCalendarId(slotId, calendar.getId())).thenReturn(Optional.of(timeSlot));
         when(timeSlotRepository.save(any(TimeSlot.class))).thenReturn(timeSlot);
 

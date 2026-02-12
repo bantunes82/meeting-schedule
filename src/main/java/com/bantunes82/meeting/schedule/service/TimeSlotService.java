@@ -5,7 +5,6 @@ import com.bantunes82.meeting.schedule.exception.TimeSlotOverlapException;
 import com.bantunes82.meeting.schedule.model.Calendar;
 import com.bantunes82.meeting.schedule.model.TimeSlot;
 import com.bantunes82.meeting.schedule.model.TimeSlotStatus;
-import com.bantunes82.meeting.schedule.repository.CalendarRepository;
 import com.bantunes82.meeting.schedule.repository.TimeSlotRepository;
 import io.micrometer.observation.annotation.Observed;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -23,11 +22,11 @@ import java.util.UUID;
 public class TimeSlotService {
 
     private final TimeSlotRepository timeSlotRepository;
-    private final CalendarRepository calendarRepository;
+    private final CalendarService calendarService;
 
-    public TimeSlotService(TimeSlotRepository timeSlotRepository, CalendarRepository calendarRepository) {
+    public TimeSlotService(TimeSlotRepository timeSlotRepository, CalendarService calendarService) {
         this.timeSlotRepository = timeSlotRepository;
-        this.calendarRepository = calendarRepository;
+        this.calendarService = calendarService;
     }
 
     /**
@@ -43,7 +42,7 @@ public class TimeSlotService {
     @Transactional
     public TimeSlot createTimeSlot(UUID userId, Instant startTime, Instant endTime) {
         validateTimeRange(startTime, endTime);
-        Calendar calendar = findCalendarByUserId(userId);
+        Calendar calendar = calendarService.findByUserId(userId);
 
         if (timeSlotRepository.existsOverlappingSlot(calendar.getId(), startTime, endTime)) {
             throw new TimeSlotOverlapException("Time slot overlaps with an existing slot");
@@ -68,7 +67,7 @@ public class TimeSlotService {
      */
     @Observed(name="timeslot.get")
     public TimeSlot getTimeSlot(UUID userId, UUID slotId) {
-        Calendar calendar = findCalendarByUserId(userId);
+        Calendar calendar = calendarService.findByUserId(userId);
         return findSlotByIdAndCalendar(slotId, calendar.getId());
     }
 
@@ -85,7 +84,7 @@ public class TimeSlotService {
     @Transactional
     public TimeSlot updateTimeSlot(UUID userId, UUID slotId, Instant startTime, Instant endTime) {
         validateTimeRange(startTime, endTime);
-        Calendar calendar = findCalendarByUserId(userId);
+        Calendar calendar = calendarService.findByUserId(userId);
         TimeSlot timeSlot = findSlotByIdAndCalendar(slotId, calendar.getId());
 
         if (timeSlotRepository.existsOverlappingSlotExcluding(
@@ -112,7 +111,7 @@ public class TimeSlotService {
     @Observed(name="timeslot.delete")
     @Transactional
     public void deleteTimeSlot(UUID userId, UUID slotId) {
-        Calendar calendar = findCalendarByUserId(userId);
+        Calendar calendar = calendarService.findByUserId(userId);
         TimeSlot timeSlot = findSlotByIdAndCalendar(slotId, calendar.getId());
         timeSlotRepository.delete(timeSlot);
     }
@@ -129,7 +128,7 @@ public class TimeSlotService {
     @Observed(name="timeslot.update-status")
     @Transactional
     public TimeSlot updateTimeSlotStatus(UUID userId, UUID slotId, TimeSlotStatus status) {
-        Calendar calendar = findCalendarByUserId(userId);
+        Calendar calendar = calendarService.findByUserId(userId);
         TimeSlot timeSlot = findSlotByIdAndCalendar(slotId, calendar.getId());
 
         if (status == TimeSlotStatus.FREE && timeSlot.getMeeting() != null) {
@@ -138,11 +137,6 @@ public class TimeSlotService {
 
         timeSlot.setStatus(status);
         return timeSlotRepository.save(timeSlot);
-    }
-
-    private Calendar findCalendarByUserId(UUID userId) {
-        return calendarRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Calendar not found to the User with id: " + userId));
     }
 
     private TimeSlot findSlotByIdAndCalendar(UUID slotId, UUID calendarId) {

@@ -7,7 +7,6 @@ import com.bantunes82.meeting.schedule.model.Meeting;
 import com.bantunes82.meeting.schedule.model.TimeSlot;
 import com.bantunes82.meeting.schedule.model.TimeSlotStatus;
 import com.bantunes82.meeting.schedule.model.User;
-import com.bantunes82.meeting.schedule.repository.CalendarRepository;
 import com.bantunes82.meeting.schedule.repository.MeetingRepository;
 import com.bantunes82.meeting.schedule.repository.TimeSlotRepository;
 import com.bantunes82.meeting.schedule.repository.UserRepository;
@@ -41,7 +40,7 @@ class MeetingServiceTest {
     private TimeSlotRepository timeSlotRepository;
 
     @Mock
-    private CalendarRepository calendarRepository;
+    private CalendarService calendarService;
 
     @Mock
     private UserRepository userRepository;
@@ -82,7 +81,7 @@ class MeetingServiceTest {
 
     @Test
     void createMeeting_shouldConvertFreeSlotToMeeting() {
-        when(calendarRepository.findByUserId(userId)).thenReturn(Optional.of(calendar));
+        when(calendarService.findByUserId(userId)).thenReturn(calendar);
         when(timeSlotRepository.findByIdAndCalendarId(slotId, calendar.getId())).thenReturn(Optional.of(timeSlot));
         when(userRepository.findAllById(participantIds)).thenReturn(List.of(participant));
         when(meetingRepository.save(any(Meeting.class))).thenReturn(meeting);
@@ -100,7 +99,7 @@ class MeetingServiceTest {
     void createMeeting_shouldThrowWhenSlotIsBusy() {
         timeSlot.setStatus(TimeSlotStatus.BUSY);
 
-        when(calendarRepository.findByUserId(userId)).thenReturn(Optional.of(calendar));
+        when(calendarService.findByUserId(userId)).thenReturn(calendar);
         when(timeSlotRepository.findByIdAndCalendarId(slotId, calendar.getId())).thenReturn(Optional.of(timeSlot));
 
         assertThatThrownBy(
@@ -113,7 +112,7 @@ class MeetingServiceTest {
     void createMeeting_shouldThrowWhenSlotHasMeeting() {
         timeSlot.setMeeting(meeting);
 
-        when(calendarRepository.findByUserId(userId)).thenReturn(Optional.of(calendar));
+        when(calendarService.findByUserId(userId)).thenReturn(calendar);
         when(timeSlotRepository.findByIdAndCalendarId(slotId, calendar.getId())).thenReturn(Optional.of(timeSlot));
 
         assertThatThrownBy(
@@ -124,7 +123,7 @@ class MeetingServiceTest {
 
     @Test
     void createMeeting_shouldThrowWhenSlotNotFound() {
-        when(calendarRepository.findByUserId(userId)).thenReturn(Optional.of(calendar));
+        when(calendarService.findByUserId(userId)).thenReturn(calendar);
         when(timeSlotRepository.findByIdAndCalendarId(slotId, calendar.getId())).thenReturn(Optional.empty());
 
         assertThatThrownBy(
@@ -135,7 +134,7 @@ class MeetingServiceTest {
 
     @Test
     void createMeeting_shouldThrowWhenParticipantNotFound() {
-        when(calendarRepository.findByUserId(userId)).thenReturn(Optional.of(calendar));
+        when(calendarService.findByUserId(userId)).thenReturn(calendar);
         when(timeSlotRepository.findByIdAndCalendarId(slotId, calendar.getId())).thenReturn(Optional.of(timeSlot));
         when(userRepository.findAllById(participantIds)).thenReturn(List.of());
 
@@ -146,7 +145,8 @@ class MeetingServiceTest {
 
     @Test
     void createMeeting_shouldThrowWhenCalendarNotFound() {
-        when(calendarRepository.findByUserId(userId)).thenReturn(Optional.empty());
+        when(calendarService.findByUserId(userId))
+                .thenThrow(new ResourceNotFoundException("Calendar not found to the User with id: " + userId));
 
         assertThatThrownBy(() -> meetingService.createMeeting(userId, slotId, title, description, participantIds))
                 .isInstanceOf(ResourceNotFoundException.class)
@@ -155,7 +155,7 @@ class MeetingServiceTest {
 
     @Test
     void getMeeting_shouldReturnDetails() {
-        when(calendarRepository.findByUserId(userId)).thenReturn(Optional.of(calendar));
+        when(calendarService.findByUserId(userId)).thenReturn(calendar);
         when(meetingRepository.findByIdAndCalendarId(meetingId, calendar.getId())).thenReturn(Optional.of(meeting));
         when(meetingRepository.findWithDetailsById(meeting.getId())).thenReturn(Optional.of(meeting));
 
@@ -167,7 +167,7 @@ class MeetingServiceTest {
 
     @Test
     void getMeeting_shouldThrowWhenNotFound() {
-        when(calendarRepository.findByUserId(userId)).thenReturn(Optional.of(calendar));
+        when(calendarService.findByUserId(userId)).thenReturn(calendar);
         when(meetingRepository.findByIdAndCalendarId(meetingId, calendar.getId())).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> meetingService.getMeeting(userId, meetingId))
@@ -177,7 +177,8 @@ class MeetingServiceTest {
 
     @Test
     void getMeeting_shouldThrowWhenWhenCalendarNotFound() {
-        when(calendarRepository.findByUserId(userId)).thenReturn(Optional.empty());
+        when(calendarService.findByUserId(userId))
+                .thenThrow(new ResourceNotFoundException("Calendar not found to the User with id: " + userId));
 
         assertThatThrownBy(() -> meetingService.getMeeting(userId, meetingId))
                 .isInstanceOf(ResourceNotFoundException.class)
