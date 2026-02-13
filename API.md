@@ -36,7 +36,7 @@ POST /api/1.0/users/{userId}/time-slots
 
 **curl:**
 ```bash
-curl -X POST http://localhost:8080/api/1.0/users/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11/time-slots \
+curl -X POST http://localhost:8080/api/1.0/users/62361f8b-bad2-40a0-9eea-e99596cf5459/time-slots \
   -H "Content-Type: application/json" \
   -d '{"startTime":"2026-04-10T09:00:00Z","endTime":"2026-04-10T10:00:00Z"}'
 ```
@@ -52,7 +52,7 @@ GET /api/1.0/users/{userId}/time-slots/{slotId}
 
 **curl:**
 ```bash
-curl http://localhost:8080/api/1.0/users/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11/time-slots/{slotId}
+curl http://localhost:8080/api/1.0/users/62361f8b-bad2-40a0-9eea-e99596cf5459/time-slots/{slotId}
 ```
 
 ---
@@ -74,7 +74,7 @@ PUT /api/1.0/users/{userId}/time-slots/{slotId}
 
 **curl:**
 ```bash
-curl -X PUT http://localhost:8080/api/1.0/users/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11/time-slots/{slotId} \
+curl -X PUT http://localhost:8080/api/1.0/users/62361f8b-bad2-40a0-9eea-e99596cf5459/time-slots/{slotId} \
   -H "Content-Type: application/json" \
   -d '{"startTime":"2026-04-10T14:00:00Z","endTime":"2026-04-10T15:00:00Z"}'
 ```
@@ -90,7 +90,7 @@ DELETE /api/1.0/users/{userId}/time-slots/{slotId}
 
 **curl:**
 ```bash
-curl -X DELETE http://localhost:8080/api/1.0/users/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11/time-slots/{slotId}
+curl -X DELETE http://localhost:8080/api/1.0/users/62361f8b-bad2-40a0-9eea-e99596cf5459/time-slots/{slotId}
 ```
 
 ---
@@ -113,7 +113,7 @@ Note: Changing from `BUSY` to `FREE` on a slot with a meeting will delete the me
 
 **curl:**
 ```bash
-curl -X PATCH http://localhost:8080/api/1.0/users/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11/time-slots/{slotId}/status \
+curl -X PATCH http://localhost:8080/api/1.0/users/62361f8b-bad2-40a0-9eea-e99596cf5459/time-slots/{slotId}/status \
   -H "Content-Type: application/json" \
   -d '{"status":"FREE"}'
 ```
@@ -135,8 +135,8 @@ The time slot must have status `FREE`. Creating a meeting automatically sets the
   "title": "Daily Stand-up",
   "description": "Team sync meeting",
   "participantIds": [
-    "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
-    "c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33"
+    "1c906026-525b-4898-a08e-5a4fda5f868b",
+    "cf3eceaa-1633-402b-9a83-59feea744509"
   ]
 }
 ```
@@ -151,8 +151,8 @@ The time slot must have status `FREE`. Creating a meeting automatically sets the
   "title": "Daily Stand-up",
   "description": "Team sync meeting",
   "participants": [
-    {"id": "...", "name": "Bob Smith", "email": "bob@example.com"},
-    {"id": "...", "name": "Charlie Brown", "email": "charlie@example.com"}
+    {"id": "...", "name": "Seed User 2", "email": "user_2@example.com"},
+    {"id": "...", "name": "Seed User 3", "email": "user_23example.com"}
   ],
   "createdAt": "...",
   "updatedAt": "..."
@@ -161,9 +161,9 @@ The time slot must have status `FREE`. Creating a meeting automatically sets the
 
 **curl:**
 ```bash
-curl -X POST http://localhost:8080/api/1.0/users/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11/time-slots/{slotId}/meetings \
+curl -X POST http://localhost:8080/api/1.0/users/62361f8b-bad2-40a0-9eea-e99596cf5459/time-slots/{slotId}/meetings \
   -H "Content-Type: application/json" \
-  -d '{"title":"Daily Stand-up","description":"Team sync","participantIds":["b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22"]}'
+  -d '{"title":"Daily Stand-up","description":"Team sync","participantIds":["1c906026-525b-4898-a08e-5a4fda5f868b"]}'
 ```
 
 ---
@@ -177,7 +177,7 @@ GET /api/1.0/users/{userId}/meetings/{meetingId}
 
 **curl:**
 ```bash
-curl http://localhost:8080/api/1.0/users/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11/meetings/{meetingId}
+curl http://localhost:8080/api/1.0/users/62361f8b-bad2-40a0-9eea-e99596cf5459/meetings/{meetingId}
 ```
 
 ---
@@ -206,12 +206,9 @@ All errors return a standard format:
 
 ## Seed Users
 
-The application comes with 3 pre-configured users:
+The application comes with 100 pre-configured users check them in [V3__create_users_calendars.sql](src/main/resources/db/migration/V3__create_users_calendars.sql) file. 
 
-| Name | UUID | Email |
-|------|------|-------|
-| Alice Johnson | `a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11` | alice@example.com |
-| Bob Smith | `b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22` | bob@example.com |
-| Charlie Brown | `c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33` | charlie@example.com |
+Use their IDs to create time slots and meetings.
+
 
 
